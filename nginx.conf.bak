@@ -1,0 +1,38 @@
+worker_processes auto;
+rtmp_auto_push on;
+events {}
+rtmp {
+    server {
+        listen 1935;
+        listen [::]:1935 ipv6only=on;
+
+        application live {
+            live on;
+
+			recorder all {
+				record all;
+				record_suffix -%Y%m%d_%H%M%S.flv;
+				record_path /records;
+			}
+        }
+    }
+}
+
+http {
+    server {
+        listen      8081;
+        location / {
+            root /records;
+        }
+
+        location /hls {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+
+            root /records;
+            add_header Cache-Control no-cache;
+        }
+    }
+}
