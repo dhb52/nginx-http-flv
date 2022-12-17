@@ -2,11 +2,13 @@ FROM buildpack-deps:bullseye
 
 LABEL maintainer="Sebastian Ramirez <tiangolo@gmail.com>"
 
-# Versions of Nginx and nginx-rtmp-module to use
+# Versions of Nginx and nginx-http-flv-module to use
 ENV NGINX_VERSION nginx-1.23.2
-ENV NGINX_RTMP_MODULE_VERSION 1.2.2
+ENV NGINX_HTTP_FLV_MODULE_VERSION 1.2.10
+ENV TZ=Asia/Shanghai
 
-# COPY sources.list /etc/apt/sources.list
+RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo ${TZ} > /etc/timezone
 
 # Install dependencies
 RUN apt-get update && \
@@ -14,25 +16,16 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Download and decompress Nginx
-# RUN mkdir -p /tmp/build/nginx && \
-#     cd /tmp/build/nginx && \
-#     wget -O ${NGINX_VERSION}.tar.gz https://nginx.org/download/${NGINX_VERSION}.tar.gz && \
-#     tar -zxf ${NGINX_VERSION}.tar.gz
 COPY src/${NGINX_VERSION}.tar.gz /tmp/build/nginx/${NGINX_VERSION}.tar.gz
 RUN cd /tmp/build/nginx && \
     tar -zxf ${NGINX_VERSION}.tar.gz
 
 # Download and decompress RTMP module
-# RUN mkdir -p /tmp/build/nginx-rtmp-module && \
-#     cd /tmp/build/nginx-rtmp-module && \
-#     wget -O nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz https://github.com/arut/nginx-rtmp-module/archive/v${NGINX_RTMP_MODULE_VERSION}.tar.gz && \
-#     tar -zxf nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz && \
-#     cd nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}
-COPY src/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz \
-    /tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz
+COPY src/nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION}.zip \
+    /tmp/build/nginx-http-flv-module/nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION}.zip
 
-RUN cd /tmp/build/nginx-rtmp-module && \
-    tar -zxf nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION}.tar.gz
+RUN cd /tmp/build/nginx-http-flv-module && \
+    unzip nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION}.zip
 
 # Build and install Nginx
 # The default puts everything under /usr/local/nginx, so it's needed to change
@@ -50,13 +43,15 @@ RUN cd /tmp/build/nginx/${NGINX_VERSION} && \
     --with-threads \
     --with-ipv6 \
     --with-http_secure_link_module \
-    --add-module=/tmp/build/nginx-rtmp-module/nginx-rtmp-module-${NGINX_RTMP_MODULE_VERSION} --with-debug && \
+    --add-module=/tmp/build/nginx-http-flv-module/nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION} --with-debug && \
     make -j $(getconf _NPROCESSORS_ONLN) && \
     make install && \
     mkdir /var/lock/nginx && \
     rm -rf /tmp/build
 
-RUN mkdir "/records"
+RUN mkdir -p "/var/www/rtmp" \
+    && mkdir "/tmp/hls" \
+    && mkdir "/tmp/dash"
 
 # Forward logs to Docker
 RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
@@ -66,4 +61,5 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 1935
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
