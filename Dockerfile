@@ -56,7 +56,7 @@ RUN mkdir -p "/data/www/rtmp" \
     && mkdir "/data/flv" \
     && mkdir "/data/logs"
 
-RUN chmod 777 -R /data
+RUN chown -R nobody:nogroup /data
 
 # Forward logs to Docker
 RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
