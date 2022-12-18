@@ -44,6 +44,7 @@ RUN cd /tmp/build/nginx/${NGINX_VERSION} && \
     --with-threads \
     --with-ipv6 \
     --with-http_secure_link_module \
+    --with-http_flv_module \
     --add-module=/tmp/build/nginx-http-flv-module/nginx-http-flv-module-${NGINX_HTTP_FLV_MODULE_VERSION} --with-debug && \
     make -j $(getconf _NPROCESSORS_ONLN) && \
     make install && \
