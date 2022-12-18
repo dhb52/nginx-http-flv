@@ -2,4 +2,4 @@
 
 set -e
 
-echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" registry.cn-shenzhen.aliyuncs.com --password-stdin

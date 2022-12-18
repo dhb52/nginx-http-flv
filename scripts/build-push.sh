@@ -2,7 +2,7 @@
 
 set -e
 
-use_tag="tiangolo/nginx-rtmp:$NAME"
+use_tag="registry.cn-shenzhen.aliyuncs.com/dhb52/nginx-http-flv:$NAME"
 use_dated_tag="${use_tag}-$(date -I)"
 
 bash scripts/build.sh

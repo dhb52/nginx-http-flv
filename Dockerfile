@@ -1,6 +1,7 @@
 FROM buildpack-deps:bullseye
 
-LABEL maintainer="Sebastian Ramirez <tiangolo@gmail.com>"
+# adapted from tiangolo/nginx-rtmp-docker
+LABEL maintainer="dhb52 <dhb52@126.com>"
 
 # Versions of Nginx and nginx-http-flv-module to use
 ENV NGINX_VERSION nginx-1.23.2
@@ -49,9 +50,13 @@ RUN cd /tmp/build/nginx/${NGINX_VERSION} && \
     mkdir /var/lock/nginx && \
     rm -rf /tmp/build
 
-RUN mkdir -p "/var/www/rtmp" \
-    && mkdir "/tmp/hls" \
-    && mkdir "/tmp/dash"
+RUN mkdir -p "/data/www/rtmp" \
+    && mkdir "/data/hls" \
+    && mkdir "/data/dash" \
+    && mkdir "/data/flv" \
+    && mkdir "/data/logs"
+
+RUN chmod 777 -R /data
 
 # Forward logs to Docker
 RUN ln -sf /dev/stdout /var/log/nginx/access.log && \
@@ -62,4 +67,5 @@ COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 1935
 EXPOSE 80
+# VOLUME [ "/data" ]
 CMD ["nginx", "-g", "daemon off;"]
